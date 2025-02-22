@@ -9,6 +9,9 @@ class SpeedDial {
       showUrls: true,
     };
     this.init();
+
+    // Bind methods to this instance
+    this.saveSite = this.saveSite.bind(this);
   }
 
   async init() {
@@ -46,10 +49,6 @@ class SpeedDial {
       .addEventListener("click", () => this.hideGroupModal());
 
     // Site modal events
-    document.getElementById("saveSiteBtn").addEventListener("click", () => {
-      this.saveSite();
-      this.hideModal();
-    });
     document
       .getElementById("cancelSiteBtn")
       .addEventListener("click", () => this.hideModal());
@@ -221,7 +220,30 @@ class SpeedDial {
   }
 
   showAddSiteModal() {
-    document.getElementById("addSiteModal").style.display = "block";
+    const modal = document.getElementById("addSiteModal");
+    const nameInput = document.getElementById("siteName");
+    const urlInput = document.getElementById("siteUrl");
+    const saveBtn = document.getElementById("saveSiteBtn");
+
+    // Reset modal
+    modal.querySelector("h2").textContent = "Add New Site";
+    saveBtn.textContent = "Add Site";
+    nameInput.value = "";
+    urlInput.value = "";
+
+    // Show modal
+    modal.style.display = "block";
+    urlInput.focus();
+
+    // Remove any existing click handlers
+    const newSaveBtn = saveBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+
+    // Add the add site handler
+    newSaveBtn.addEventListener("click", () => {
+      this.saveSite();
+      this.hideModal();
+    });
   }
 
   hideModal() {
@@ -231,14 +253,13 @@ class SpeedDial {
   async saveSite() {
     const nameInput = document.getElementById("siteName");
     const urlInput = document.getElementById("siteUrl");
-    const name = nameInput.value.trim();
     let url = urlInput.value.trim();
     const saveBtn = document.getElementById("saveSiteBtn");
 
     try {
       // Validate inputs
-      if (!name || !url) {
-        throw new Error("Please enter both name and URL");
+      if (!url) {
+        throw new Error("Please enter the URL");
       }
 
       // Add https:// if no protocol specified
@@ -263,29 +284,31 @@ class SpeedDial {
       saveBtn.disabled = true;
 
       try {
-        // Generate thumbnail
-        const thumbnail = await this.generateThumbnail(url);
+        // Generate thumbnail and fetch title in parallel
+        const [thumbnail, title] = await Promise.all([
+          this.generateThumbnail(url),
+          this.fetchSiteTitle(url),
+        ]);
 
         // Add the site
         group.sites.push({
           id: Date.now().toString(),
-          name: name,
+          name: nameInput.value.trim() || title,
           url: url,
           thumbnail: thumbnail,
         });
 
         // Save to storage
         await this.saveToStorage();
-        console.log("Site saved successfully");
 
         // Update UI
         this.renderSites();
 
-        // Clear inputs for next entry
+        // Reset modal
+        const modal = document.getElementById("addSiteModal");
+        modal.style.display = "none";
         nameInput.value = "";
         urlInput.value = "";
-
-        // Reset button
         saveBtn.textContent = "Add Site";
         saveBtn.disabled = false;
       } catch (error) {
@@ -296,8 +319,6 @@ class SpeedDial {
       // Reset button state
       saveBtn.textContent = "Add Site";
       saveBtn.disabled = false;
-
-      // Show error to user
       alert(error.message || "Error saving site. Please try again.");
     }
   }
@@ -341,6 +362,38 @@ class SpeedDial {
     }
   }
 
+  async fetchSiteTitle(url) {
+    try {
+      // Create a temporary tab to get the page title
+      const tab = await new Promise((resolve) => {
+        chrome.tabs.create({ url, active: false }, (tab) => resolve(tab));
+      });
+
+      // Wait for the tab to load
+      await new Promise((resolve) => {
+        chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+          if (tabId === tab.id && info.status === "complete") {
+            chrome.tabs.onUpdated.removeListener(listener);
+            resolve();
+          }
+        });
+      });
+
+      // Get the tab info to get the title
+      const tabInfo = await new Promise((resolve) => {
+        chrome.tabs.get(tab.id, (tab) => resolve(tab));
+      });
+
+      // Clean up the temporary tab
+      chrome.tabs.remove(tab.id);
+
+      return tabInfo.title || new URL(url).hostname;
+    } catch (error) {
+      console.error("Error fetching title:", error);
+      return new URL(url).hostname;
+    }
+  }
+
   renderGroups() {
     const container = document.getElementById("groupTabs");
     container.innerHTML = "";
@@ -350,12 +403,76 @@ class SpeedDial {
       tab.className = `group-tab ${
         group.id === this.currentGroup ? "active" : ""
       }`;
-      tab.textContent = group.name;
-      tab.addEventListener("click", () => {
+
+      // Create wrapper for group name and menu
+      tab.innerHTML = `
+        <span class="group-name">${group.name}</span>
+        <button class="group-menu-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z"/>
+          </svg>
+        </button>
+        <div class="group-menu-dropdown">
+          <button class="remove-group">Remove Group</button>
+        </div>
+      `;
+
+      // Click handler for the group name
+      const groupName = tab.querySelector(".group-name");
+      groupName.addEventListener("click", () => {
         this.currentGroup = group.id;
         this.renderGroups();
         this.renderSites();
       });
+
+      // Menu button click handler
+      const menuBtn = tab.querySelector(".group-menu-btn");
+      const menuDropdown = tab.querySelector(".group-menu-dropdown");
+      menuBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        // Close all other dropdowns first
+        document
+          .querySelectorAll(".group-menu-dropdown.show")
+          .forEach((dropdown) => {
+            if (dropdown !== menuDropdown) {
+              dropdown.classList.remove("show");
+            }
+          });
+        menuDropdown.classList.toggle("show");
+      });
+
+      // Remove group handler
+      tab
+        .querySelector(".remove-group")
+        .addEventListener("click", async (e) => {
+          e.stopPropagation();
+          menuDropdown.classList.remove("show");
+
+          if (this.groups.length === 1) {
+            alert(
+              "Cannot remove the last group. At least one group is required."
+            );
+            return;
+          }
+
+          if (
+            confirm(
+              `Are you sure you want to remove "${group.name}" and all its sites?`
+            )
+          ) {
+            // Remove the group
+            this.groups = this.groups.filter((g) => g.id !== group.id);
+
+            // If we removed the current group, switch to the first available group
+            if (this.currentGroup === group.id) {
+              this.currentGroup = this.groups[0]?.id || null;
+            }
+
+            await this.saveToStorage();
+            this.renderGroups();
+          }
+        });
+
       container.appendChild(tab);
     });
 
@@ -377,16 +494,100 @@ class SpeedDial {
           site.thumbnail
         }')">
           <div class="site-overlay"></div>
+          <div class="site-menu">
+            <button class="menu-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z"/>
+              </svg>
+            </button>
+            <div class="menu-dropdown">
+              <button class="edit-dial">Edit</button>
+              <button class="move-dial">Move to Group</button>
+              <button class="refresh-thumb">Refresh Thumbnail</button>
+              <button class="remove-dial">Remove</button>
+            </div>
+          </div>
         </div>
         <div class="site-info">
+          ${
+            this.settings.showThumbnails
+              ? `
+            <img class="site-icon" src="https://www.google.com/s2/favicons?sz=32&domain=${encodeURIComponent(
+              new URL(site.url).hostname
+            )}" />
+          `
+              : ""
+          }
           <h3>${site.name}</h3>
           <span class="site-url">${new URL(site.url).hostname}</span>
         </div>
       `;
 
-      item.addEventListener("click", () => {
-        window.open(site.url, "_blank");
+      // Add click handler for the site
+      const thumbnail = item.querySelector(".site-thumbnail");
+      thumbnail.addEventListener("click", (e) => {
+        // Only open the site if we didn't click the menu
+        if (!e.target.closest(".site-menu")) {
+          window.open(site.url, "_blank");
+        }
       });
+
+      // Menu button click handler
+      const menuBtn = item.querySelector(".menu-btn");
+      const menuDropdown = item.querySelector(".menu-dropdown");
+      menuBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        menuDropdown.classList.toggle("show");
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener("click", () => {
+        menuDropdown.classList.remove("show");
+      });
+
+      // Refresh thumbnail handler
+      item
+        .querySelector(".refresh-thumb")
+        .addEventListener("click", async (e) => {
+          e.stopPropagation();
+          menuDropdown.classList.remove("show");
+          try {
+            const thumbnail = await this.generateThumbnail(site.url);
+            site.thumbnail = thumbnail;
+            await this.saveToStorage();
+            this.renderSites();
+          } catch (error) {
+            console.error("Error refreshing thumbnail:", error);
+            alert("Failed to refresh thumbnail. Please try again.");
+          }
+        });
+
+      // Edit dial handler
+      item.querySelector(".edit-dial").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        menuDropdown.classList.remove("show");
+        this.showEditSiteModal(site);
+      });
+
+      // Move dial handler
+      item.querySelector(".move-dial").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        menuDropdown.classList.remove("show");
+        this.showMoveToGroupModal(site, group);
+      });
+
+      // Remove dial handler
+      item
+        .querySelector(".remove-dial")
+        .addEventListener("click", async (e) => {
+          e.stopPropagation();
+          menuDropdown.classList.remove("show");
+          if (confirm(`Are you sure you want to remove ${site.name}?`)) {
+            group.sites = group.sites.filter((s) => s.id !== site.id);
+            await this.saveToStorage();
+            this.renderSites();
+          }
+        });
 
       container.appendChild(item);
     });
@@ -468,6 +669,160 @@ class SpeedDial {
   async refreshSpeedDial() {
     await this.loadFromStorage();
     this.renderGroups();
+  }
+
+  showEditSiteModal(site) {
+    const modal = document.getElementById("addSiteModal");
+    const nameInput = document.getElementById("siteName");
+    const urlInput = document.getElementById("siteUrl");
+    const saveBtn = document.getElementById("saveSiteBtn");
+
+    // Update modal for edit mode
+    modal.querySelector("h2").textContent = "Edit Site";
+    saveBtn.textContent = "Save Changes";
+
+    // Fill in existing values
+    nameInput.value = site.name;
+    urlInput.value = site.url;
+
+    // Show modal
+    modal.style.display = "block";
+    urlInput.focus();
+
+    // Find the group containing this site
+    const group = this.groups.find((g) =>
+      g.sites.some((s) => s.id === site.id)
+    );
+    if (!group) {
+      alert("Error: Site's group not found");
+      return;
+    }
+
+    // Create a new save handler for edit mode
+    const saveHandler = async (e) => {
+      e.preventDefault();
+      try {
+        let url = urlInput.value.trim();
+
+        if (!url) {
+          throw new Error("Please enter the URL");
+        }
+
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+          url = "https://" + url;
+        }
+
+        // Validate URL
+        new URL(url);
+
+        // Show loading state
+        saveBtn.textContent = "Saving...";
+        saveBtn.disabled = true;
+
+        // Find the site in the group
+        const siteIndex = group.sites.findIndex((s) => s.id === site.id);
+        if (siteIndex === -1) {
+          throw new Error("Site not found in group");
+        }
+
+        // If URL changed, update thumbnail and fetch new title
+        if (url !== site.url) {
+          const [newThumbnail, newTitle] = await Promise.all([
+            this.generateThumbnail(url),
+            this.fetchSiteTitle(url),
+          ]);
+
+          // Update the site in the group
+          group.sites[siteIndex] = {
+            ...site,
+            url: url,
+            thumbnail: newThumbnail,
+            name: nameInput.value.trim() || newTitle,
+          };
+        } else {
+          // Just update the name if URL hasn't changed
+          group.sites[siteIndex] = {
+            ...site,
+            name: nameInput.value.trim() || site.name,
+          };
+        }
+
+        // Save changes
+        await this.saveToStorage();
+        this.renderSites();
+
+        // Reset and close modal
+        modal.style.display = "none";
+        nameInput.value = "";
+        urlInput.value = "";
+        modal.querySelector("h2").textContent = "Add New Site";
+        saveBtn.textContent = "Add Site";
+        saveBtn.disabled = false;
+      } catch (error) {
+        saveBtn.textContent = "Save Changes";
+        saveBtn.disabled = false;
+        alert(error.message || "Error saving changes. Please try again.");
+      }
+    };
+
+    // Remove any existing click handlers
+    const newSaveBtn = saveBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+
+    // Add the edit handler
+    newSaveBtn.addEventListener("click", saveHandler);
+  }
+
+  showMoveToGroupModal(site, currentGroup) {
+    // Create move to group modal if it doesn't exist
+    let modal = document.getElementById("moveToGroupModal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "moveToGroupModal";
+      modal.className = "modal";
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h2>Move to Group</h2>
+          <div class="group-list"></div>
+          <div class="modal-buttons">
+            <button id="cancelMoveBtn">Cancel</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    const groupList = modal.querySelector(".group-list");
+    groupList.innerHTML = "";
+
+    // Create buttons for each group except current
+    this.groups.forEach((group) => {
+      if (group.id !== currentGroup.id) {
+        const button = document.createElement("button");
+        button.className = "group-option";
+        button.textContent = group.name;
+        button.addEventListener("click", async () => {
+          // Move site to selected group
+          currentGroup.sites = currentGroup.sites.filter(
+            (s) => s.id !== site.id
+          );
+          group.sites.push(site);
+
+          await this.saveToStorage();
+          this.renderSites();
+          modal.style.display = "none";
+        });
+        groupList.appendChild(button);
+      }
+    });
+
+    // Show modal
+    modal.style.display = "block";
+
+    // Handle cancel
+    document.getElementById("cancelMoveBtn").onclick = () => {
+      modal.style.display = "none";
+    };
   }
 }
 

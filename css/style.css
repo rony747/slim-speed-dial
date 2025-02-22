@@ -50,6 +50,10 @@ body {
   transition: all 0.3s ease;
   font-weight: 500;
   box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
 }
 
 .group-tab:hover {
@@ -115,6 +119,39 @@ body {
   margin: 0;
   font-size: 16px;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+
+.site-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.group-option {
+  text-align: left;
+  padding: 12px;
+  background: var(--primary-color);
+  border: 1px solid var(--hover-color);
+  color: var(--text-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.group-option:hover {
+  background: var(--hover-color);
+  transform: translateY(-2px);
 }
 
 .modal {
@@ -367,4 +404,151 @@ button:disabled {
 /* Hide URLs when disabled */
 .hide-urls .site-url {
   display: none;
+}
+
+.site-menu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.site-thumbnail:hover .site-menu {
+  opacity: 1;
+}
+
+.menu-btn {
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  color: white;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  padding: 4px 0;
+  display: none;
+  min-width: 150px;
+}
+
+.menu-dropdown.show {
+  display: block;
+}
+
+.menu-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: #333;
+  font-size: 14px;
+}
+
+.menu-dropdown button:hover {
+  background: #f0f0f0;
+}
+
+.menu-dropdown .remove-dial {
+  color: #dc3545;
+}
+
+.menu-dropdown .remove-dial:hover {
+  background: #ffebee;
+}
+
+.menu-dropdown .edit-dial:hover {
+  background: #e3f2fd;
+}
+
+.menu-dropdown .move-dial:hover {
+  background: #f3e5f5;
+}
+
+.group-name {
+  cursor: pointer;
+}
+
+.group-menu-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  margin: 0;
+  cursor: pointer;
+  color: white;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.group-menu-btn:hover {
+  opacity: 1;
+  background: none;
+  transform: none;
+}
+
+.group-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  padding: 4px 0;
+  display: none;
+  min-width: 150px;
+  z-index: 100;
+}
+
+.group-menu-dropdown.show {
+  display: block;
+}
+
+.group-menu-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: #333;
+  font-size: 14px;
+  margin: 0;
+}
+
+.group-menu-dropdown button:hover {
+  background: #f0f0f0;
+  transform: none;
+}
+
+.group-menu-dropdown .remove-group {
+  color: #dc3545;
+}
+
+.group-menu-dropdown .remove-group:hover {
+  background: #ffebee;
 }
