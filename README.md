@@ -20,12 +20,11 @@ A clean and efficient Chrome extension that provides a minimalist speed dial wit
 
 The extension requires the following permissions:
 
-- Storage: To save your speed dial settings
-- Tabs: To manage new tab functionality
-- Bookmarks: To integrate with Chrome bookmarks
-- Active Tab: To interact with the current tab
-- Windows: To manage window interactions
-- Context Menus: For right-click functionality
+- `storage`: To save your speed dial settings and groups
+- `tabs`: To capture thumbnails and manage new tab functionality
+- `contextMenus`: For right-click "Add to Speed Dial" functionality
+- Host permissions: Access to websites for thumbnails and favicons
+- `windows`: To create temporary windows for thumbnail generation
 
 ## Contributing
 

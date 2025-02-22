@@ -16,6 +16,21 @@ class SpeedDial {
     this.setupEventListeners();
     this.setupContextMenu();
     this.renderGroups();
+
+    let useThumbnails = false;
+
+    // Load the thumbnail preference
+    chrome.storage.sync.get(["useThumbnails"], (result) => {
+      useThumbnails = result.useThumbnails || false;
+      document.getElementById("useThumbnails").checked = useThumbnails;
+    });
+
+    // Listen for changes to the thumbnail setting
+    document.getElementById("useThumbnails").addEventListener("change", (e) => {
+      useThumbnails = e.target.checked;
+      chrome.storage.sync.set({ useThumbnails });
+      this.refreshSpeedDial(); // Refresh your speed dial display
+    });
   }
 
   setupEventListeners() {
@@ -289,57 +304,40 @@ class SpeedDial {
 
   async generateThumbnail(url) {
     try {
-      // First try to get a favicon
-      const domain = new URL(url).hostname;
-      const favicon = `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(
-        domain
-      )}`;
+      // Check if we should use website thumbnails
+      const result = await chrome.storage.sync.get(["useThumbnails"]);
+      const useThumbnails = result.useThumbnails || false;
 
-      // Test if favicon exists and use it if available
-      try {
-        const img = new Image();
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-          img.src = favicon;
-        });
-        return favicon;
-      } catch (faviconError) {
-        console.log("Favicon not found, trying screenshot...");
+      if (!useThumbnails) {
+        // Use favicon if thumbnails are disabled
+        const domain = new URL(url).hostname;
+        return `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(
+          domain
+        )}`;
       }
 
-      // If favicon fails, try screenshot
-      const window = await chrome.windows.create({
-        url: url,
-        type: "popup",
-        width: 1280,
-        height: 800,
-        focused: false,
-        state: "minimized", // Keep it minimized to avoid flashing
+      // Use background script to capture thumbnail
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+          { action: "captureThumbnail", url },
+          (response) => {
+            if (response && response.thumbnail) {
+              resolve(response);
+            } else {
+              reject(new Error("Failed to capture thumbnail"));
+            }
+          }
+        );
       });
 
-      // Wait for the page to load
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
-      try {
-        // Capture the screenshot
-        const screenshot = await chrome.tabs.captureVisibleTab(window.id, {
-          format: "jpeg",
-          quality: 60,
-        });
-
-        // Close the temporary window
-        await chrome.windows.remove(window.id);
-        return screenshot;
-      } catch (screenshotError) {
-        // If screenshot fails, close window
-        await chrome.windows.remove(window.id);
-        throw screenshotError;
-      }
+      return response.thumbnail;
     } catch (error) {
       console.error("Error generating thumbnail:", error);
-      // Return default icon as last resort
-      return "icons/icon128.png";
+      // Fallback to favicon on error
+      const domain = new URL(url).hostname;
+      return `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(
+        domain
+      )}`;
     }
   }
 
@@ -465,6 +463,11 @@ class SpeedDial {
 
     // Toggle URLs
     document.body.classList.toggle("hide-urls", !this.settings.showUrls);
+  }
+
+  async refreshSpeedDial() {
+    await this.loadFromStorage();
+    this.renderGroups();
   }
 }
 

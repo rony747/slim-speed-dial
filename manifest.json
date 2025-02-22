@@ -8,10 +8,14 @@
     "tabs",
     "bookmarks",
     "activeTab",
-    "<all_urls>",
     "windows",
-    "contextMenus"
+    "contextMenus",
+    "scripting"
   ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "js/background.js"
+  },
   "chrome_url_overrides": {
     "newtab": "popup.html"
   },
