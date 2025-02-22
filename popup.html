@@ -104,6 +104,26 @@
             </label>
           </div>
         </div>
+        <div class="settings-section">
+          <h3>Backup & Restore</h3>
+          <div class="setting-item backup-controls">
+            <button id="exportBtn" class="secondary-btn">
+              Export Speed Dial Data
+            </button>
+            <button id="importBtn" class="secondary-btn">
+              Import Speed Dial Data
+            </button>
+            <button id="regenerateThumbsBtn" class="secondary-btn">
+              Regenerate All Thumbnails
+            </button>
+            <input
+              type="file"
+              id="importFile"
+              accept=".json"
+              style="display: none"
+            />
+          </div>
+        </div>
         <div class="modal-buttons">
           <button id="saveSettingsBtn">Save</button>
           <button id="cancelSettingsBtn">Cancel</button>

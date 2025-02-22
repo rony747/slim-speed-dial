@@ -552,3 +552,56 @@ button:disabled {
 .group-menu-dropdown .remove-group:hover {
   background: #ffebee;
 }
+
+.backup-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.secondary-btn {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.secondary-btn:hover {
+  background-color: #e0e0e0;
+  border-color: #ccc;
+}
+
+.secondary-btn:active {
+  background-color: #d0d0d0;
+  transform: translateY(1px);
+}
+
+.progress-info {
+  margin-top: 20px;
+  padding: 15px;
+  background: var(--primary-color);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.progress-info p {
+  margin: 8px 0;
+  color: #888;
+}
+
+.progress-info #progressCount {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.progress-info #currentSite {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-color);
+}

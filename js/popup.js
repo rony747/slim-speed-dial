@@ -53,6 +53,22 @@ class SpeedDial {
       .getElementById("cancelSiteBtn")
       .addEventListener("click", () => this.hideModal());
 
+    // Import/Export events
+    document
+      .getElementById("exportBtn")
+      .addEventListener("click", () => this.exportData());
+    document
+      .getElementById("importBtn")
+      .addEventListener("click", () =>
+        document.getElementById("importFile").click()
+      );
+    document
+      .getElementById("importFile")
+      .addEventListener("change", (e) => this.importData(e));
+    document
+      .getElementById("regenerateThumbsBtn")
+      .addEventListener("click", () => this.regenerateAllThumbnails());
+
     // Close modals when clicking outside
     window.addEventListener("click", (event) => {
       if (event.target.classList.contains("modal")) {
@@ -823,6 +839,178 @@ class SpeedDial {
     document.getElementById("cancelMoveBtn").onclick = () => {
       modal.style.display = "none";
     };
+  }
+
+  async exportData() {
+    try {
+      // Create a deep copy of the data
+      const exportGroups = JSON.parse(JSON.stringify(this.groups));
+
+      // Remove thumbnails from the export data
+      exportGroups.forEach((group) => {
+        group.sites.forEach((site) => {
+          delete site.thumbnail;
+        });
+      });
+
+      const data = {
+        groups: exportGroups,
+        settings: this.settings,
+        version: "1.0",
+      };
+
+      // Create a Blob with the data
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+
+      // Create a temporary link and click it to download the file
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `speed-dial-backup-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      alert("Failed to export data. Please try again.");
+    }
+  }
+
+  async importData(event) {
+    try {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+
+          // Validate the imported data
+          if (!data.groups || !Array.isArray(data.groups)) {
+            throw new Error("Invalid data format: missing or invalid groups");
+          }
+
+          // Import groups and sites
+          this.groups = data.groups;
+
+          // Import settings if they exist
+          if (data.settings) {
+            this.settings = { ...this.settings, ...data.settings };
+          }
+
+          // Ask user if they want to regenerate thumbnails
+          const shouldRegenerate = confirm(
+            "Would you like to regenerate thumbnails for all sites? This may take a moment."
+          );
+
+          if (shouldRegenerate) {
+            await this.regenerateAllThumbnails();
+          } else {
+            // If not regenerating, set default favicon thumbnails
+            for (const group of this.groups) {
+              for (const site of group.sites) {
+                const domain = new URL(site.url).hostname;
+                site.thumbnail = `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(
+                  domain
+                )}`;
+              }
+            }
+            await this.saveToStorage();
+            this.renderGroups();
+          }
+
+          // Reset file input
+          event.target.value = "";
+
+          alert("Data imported successfully!");
+        } catch (error) {
+          console.error("Error parsing import data:", error);
+          alert("Failed to import data. Please make sure the file is valid.");
+        }
+      };
+
+      reader.readAsText(file);
+    } catch (error) {
+      console.error("Error importing data:", error);
+      alert("Failed to import data. Please try again.");
+    }
+  }
+
+  async regenerateAllThumbnails() {
+    try {
+      let totalSites = 0;
+      let processedSites = 0;
+
+      // Count total sites
+      for (const group of this.groups) {
+        totalSites += group.sites.length;
+      }
+
+      // Show progress modal
+      const progressModal = document.createElement("div");
+      progressModal.className = "modal";
+      progressModal.style.display = "block";
+      progressModal.innerHTML = `
+        <div class="modal-content">
+          <h2>Regenerating Thumbnails</h2>
+          <div class="progress-info">
+            <p>Processing: <span id="progressCount">0</span>/${totalSites} sites</p>
+            <p id="currentSite"></p>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(progressModal);
+
+      // Process each site
+      for (const group of this.groups) {
+        for (const site of group.sites) {
+          try {
+            // Update progress
+            processedSites++;
+            document.getElementById("progressCount").textContent =
+              processedSites;
+            document.getElementById(
+              "currentSite"
+            ).textContent = `Current: ${site.name}`;
+
+            // Generate new thumbnail
+            site.thumbnail = await this.generateThumbnail(site.url);
+          } catch (error) {
+            console.error(
+              `Error regenerating thumbnail for ${site.url}:`,
+              error
+            );
+            // Use favicon as fallback
+            const domain = new URL(site.url).hostname;
+            site.thumbnail = `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(
+              domain
+            )}`;
+          }
+        }
+      }
+
+      // Save changes and update UI
+      await this.saveToStorage();
+      this.renderGroups();
+
+      // Remove progress modal
+      document.body.removeChild(progressModal);
+
+      alert("All thumbnails have been regenerated!");
+    } catch (error) {
+      console.error("Error regenerating thumbnails:", error);
+      alert(
+        "An error occurred while regenerating thumbnails. Some thumbnails may not have been updated."
+      );
+    }
   }
 }
 
