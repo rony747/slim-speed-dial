@@ -1,0 +1,370 @@
+:root {
+  --primary-color: #1a1a1a;
+  --secondary-color: #2d2d2d;
+  --accent-color: #4a90e2;
+  --text-color: #ffffff;
+  --hover-color: #3a3a3a;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --thumbnail-height: 180px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background-color: var(--primary-color);
+  color: var(--text-color);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  background-color: var(--secondary-color);
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.group-tabs {
+  display: flex;
+  gap: 15px;
+  flex-grow: 1;
+  flex-wrap: wrap;
+}
+
+.group-tab {
+  padding: 10px 20px;
+  background-color: var(--accent-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+}
+
+.group-tab:hover {
+  background-color: #357abd;
+  transform: translateY(-2px);
+}
+
+.group-tab.active {
+  background-color: #357abd;
+  position: relative;
+}
+
+.speed-dial-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 30px;
+  padding: 30px 0;
+}
+
+.speed-dial-item {
+  background-color: var(--secondary-color);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.speed-dial-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.site-thumbnail {
+  width: 100%;
+  height: var(--thumbnail-height);
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.site-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease;
+}
+
+.speed-dial-item:hover .site-overlay {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.site-info {
+  padding: 15px;
+  text-align: center;
+}
+
+.site-info h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background-color: var(--secondary-color);
+  padding: 30px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 450px;
+  margin: 60px auto;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content h2 {
+  margin: 0 0 20px 0;
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 1.5rem;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+  justify-content: flex-end;
+}
+
+.modal-buttons button {
+  min-width: 100px;
+  margin: 0;
+}
+
+.modal-tip {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--hover-color);
+  color: #888;
+  font-size: 14px;
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 12px 16px;
+  margin: 8px 0 16px;
+  border: 2px solid var(--hover-color);
+  border-radius: 8px;
+  background-color: var(--primary-color);
+  color: var(--text-color);
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+input:hover {
+  border-color: #444;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 500px) {
+  .modal-content {
+    margin: 20px auto;
+    padding: 20px;
+  }
+
+  .modal-buttons {
+    flex-direction: column;
+  }
+
+  .modal-buttons button {
+    width: 100%;
+  }
+}
+
+button {
+  padding: 12px 24px;
+  background-color: var(--accent-color);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  margin: 5px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background-color: #357abd;
+  transform: translateY(-2px);
+}
+
+.add-site {
+  border: 2px dashed #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--hover-color);
+}
+
+.add-site:hover {
+  border-color: var(--accent-color);
+}
+
+.add-site h3 {
+  color: #888;
+}
+
+#cancelGroupBtn,
+#cancelSiteBtn {
+  background-color: var(--secondary-color);
+  border: 1px solid #444;
+}
+
+#cancelGroupBtn:hover,
+#cancelSiteBtn:hover {
+  background-color: var(--hover-color);
+}
+
+.group-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  background-color: var(--accent-color);
+  border-radius: 3px;
+}
+
+.modal-content input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.site-url {
+  display: block;
+  margin-top: 5px;
+  color: #888;
+  font-size: 12px;
+}
+
+/* Loading state for button */
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.settings-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  margin-right: 15px;
+  cursor: pointer;
+  color: var(--text-color);
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.settings-btn:hover {
+  opacity: 1;
+  transform: rotate(45deg);
+}
+
+.settings-content {
+  max-width: 500px;
+}
+
+.settings-section {
+  margin-bottom: 25px;
+}
+
+.settings-section h3 {
+  font-size: 1.1rem;
+  margin: 0 0 15px 0;
+  color: var(--accent-color);
+}
+
+.setting-item {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.setting-item label {
+  flex: 1;
+  font-size: 14px;
+}
+
+.setting-item select,
+.setting-item input[type="range"] {
+  width: 150px;
+  padding: 8px;
+  background: var(--primary-color);
+  border: 1px solid var(--hover-color);
+  border-radius: 4px;
+  color: var(--text-color);
+}
+
+.setting-item input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+#thumbnailHeightValue {
+  min-width: 50px;
+  font-size: 14px;
+  color: #888;
+}
+
+/* Hide thumbnails when disabled */
+.hide-thumbnails .site-thumbnail {
+  display: none;
+}
+
+/* Hide URLs when disabled */
+.hide-urls .site-url {
+  display: none;
+}

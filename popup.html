@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Speed Dial</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="top-bar">
+        <button id="settingsBtn" class="settings-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path
+              fill="currentColor"
+              d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"
+            />
+          </svg>
+        </button>
+        <div class="group-tabs" id="groupTabs">
+          <!-- Groups will be dynamically added here -->
+        </div>
+        <button id="addGroupBtn" class="add-group-btn">+ Add Group</button>
+      </div>
+
+      <div class="speed-dial-container" id="speedDialContainer">
+        <!-- Speed dial items will be dynamically added here -->
+      </div>
+    </div>
+
+    <!-- Add Group Modal -->
+    <div id="addGroupModal" class="modal">
+      <div class="modal-content">
+        <h2>Add New Group</h2>
+        <input type="text" id="groupName" placeholder="Group Name" />
+        <div class="modal-buttons">
+          <button id="saveGroupBtn">Add Group</button>
+          <button id="cancelGroupBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Site Modal -->
+    <div id="addSiteModal" class="modal">
+      <div class="modal-content">
+        <h2>Add New Site</h2>
+        <input type="text" id="siteName" placeholder="Site Name" />
+        <input
+          type="url"
+          id="siteUrl"
+          placeholder="Site URL (e.g., google.com)"
+        />
+        <div class="modal-buttons">
+          <button id="saveSiteBtn">Add Site</button>
+          <button id="cancelSiteBtn">Close</button>
+        </div>
+        <p class="modal-tip">Tip: Keep adding sites or press ESC to close</p>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+      <div class="modal-content settings-content">
+        <h2>Settings</h2>
+        <div class="settings-section">
+          <h3>Layout</h3>
+          <div class="setting-item">
+            <label for="columnSize">Thumbnails per row</label>
+            <select id="columnSize">
+              <option value="200">Many (6+)</option>
+              <option value="250">Medium (4-5)</option>
+              <option value="300">Few (3-4)</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label for="thumbnailHeight">Thumbnail height</label>
+            <input
+              type="range"
+              id="thumbnailHeight"
+              min="100"
+              max="250"
+              step="10"
+              value="180"
+            />
+            <span id="thumbnailHeightValue">180px</span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3>Appearance</h3>
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="showThumbnails" checked />
+              Show thumbnails
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="showUrls" checked />
+              Show URLs under titles
+            </label>
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <button id="saveSettingsBtn">Save</button>
+          <button id="cancelSettingsBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/popup.js"></script>
+  </body>
+</html>
